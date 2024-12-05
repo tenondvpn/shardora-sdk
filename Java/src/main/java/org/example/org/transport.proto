@@ -1,0 +1,202 @@
+syntax = "proto2";
+// 生成类的包名
+//option java_package = "org.example";
+//// 生成类的文件名，否则默认生成的类名为proto文件名的驼峰命名
+//option java_outer_classname = "Transport";
+// 定义的所有消息、枚举和服务生成对应的多个类文件，而不是以内部类的形式出现
+option java_multiple_files = false;
+message NodeInfo {
+	optional uint32 ip = 1;
+	optional uint32 port = 2;
+	optional bytes pubkey = 3;
+	optional bytes country = 4;
+}
+
+enum StepType {
+	kNormalFrom = 0;
+	kNormalTo = 1;
+	kConsensusRootElectShard = 2;  // shard consensus network election
+	kConsensusRootTimeBlock = 3;  // create time block
+	kConsensusCreateGenesisAcount = 4;
+	kConsensusLocalTos = 5;
+	kContractCreate = 6;
+	kContractGasPrepayment = 7;
+	kContractExcute = 8;
+	kRootCreateAddress = 9;
+	kRootCreateAddressCrossSharding = 11;
+	kStatistic = 12;
+	kJoinElect = 13;
+	kCreateLibrary = 14;
+	kCross = 15;
+	kRootCross = 16;
+}
+
+enum InitInfoTagType {
+	kNoneResponse = 0;
+	kResponseNodes = 1;
+	kResponseBalance = 2;
+	kResponseTxList = 3;
+	kResponseOutOfBindwidth = 4;
+	kTransaction = 5;
+	kC2cTxList = 6;
+	kC2cUserSellInfo = 7;
+	kC2cNewSell = 8;
+	kC2cNewOrder = 9;
+	kC2cConfirm = 10;
+	kC2cPrepayment = 11;
+	kC2cRefreshLocal = 12;
+	kC2cCancelOrder = 13;
+	kC2cCancelSell = 14;
+	kC2cManagerRecover = 15;
+	kC2cManagerCancelSell = 16;
+}
+
+enum ReceiveType {
+	kAlipay = 0;
+	kWeChatPay = 1;
+	kPaypal = 2;
+	kBandCard = 3;
+	kCreditCard = 4;
+	kBitcoin = 5;
+	kEth = 6;
+	kUsdt = 7;
+	kUsdc = 8;
+	kUnkown = 9;
+}
+
+message TxMessage {
+	optional uint32 version = 1;
+	optional bytes gid = 2;
+	optional bytes pubkey = 3;
+	optional uint64 gas_limit = 4;
+	optional uint64 gas_price = 5;
+	optional bytes key = 6;
+	optional bytes value = 7;
+	optional bytes to = 8;
+	optional uint64 amount = 9;
+	optional StepType step = 10 [default=kNormalFrom];
+	optional uint64 contract_prepayment = 11;
+	optional bytes contract_code = 12;
+	optional bytes contract_input = 13;
+	optional bytes signr = 14;
+	optional bytes signs = 15;
+	optional bytes signv = 16;
+}
+
+message TxInfo {
+	optional bytes from = 1;
+	optional bytes to = 2;
+	optional uint64 height = 3;
+	optional uint64 amount = 4;
+	optional uint64 balance = 5;
+	optional bool to_add = 6;
+	optional uint64 timestamp = 7;
+}
+
+enum Status {
+	kDefault = 0;
+	kConfirmed = 1;
+	kReported = 2;
+	kSellWaiting = 3;
+	kSellReleased = 4;
+	kSellPrepayment = 5;
+	kSellWaitingCreate = 6;
+	kSellCreated = 7;
+	kSellWaitingConfirm = 8;
+	kSellTimeout = 9;
+	kOrderCanceled = 10;
+	kSellWaitingRelease = 11;
+	kSellUserRelease = 12;
+	kSellManagerWaitingRelease = 13;
+	kSellManagerReleased = 14;
+}
+
+message OrderInfo {
+	optional bytes buyer = 1;
+	optional Status status = 2;
+	optional uint64 amount = 3;
+	optional bytes seller = 4;
+	optional uint64 create_tm_ms = 5;
+}
+
+message SellInfo {
+	optional bytes protocol_addr = 1;
+	optional bytes seller = 2;
+	optional uint64 pledge_amount = 3;
+	optional uint64 price = 4;
+	repeated ReceivableInfo receivable = 5;
+	optional bool manager_released = 6;
+	optional bool seller_released = 7;
+	optional Status status = 8;
+	optional OrderInfo order_info = 9;
+	repeated bytes reports = 10;
+	optional uint64 height = 11;
+	optional uint64 prepayment = 12;
+	optional uint64 create_tm_ms = 13;
+	optional bytes username = 14;
+	optional uint32 credit = 15;
+	optional uint64 min_amount = 16;
+	optional uint64 max_amount = 17;
+}
+
+message NewOrder {
+	optional bytes seller = 1;
+	optional uint64 amount = 2;
+	optional bytes buyer = 3;
+}
+
+message ReceivableInfo {
+	optional ReceiveType type = 1;
+	optional bytes name = 2;
+	optional bytes id = 3;
+	optional bytes user_name = 4;
+	optional bytes other = 5;
+}
+
+message NewSell {
+	optional bytes protocol_addr = 1;
+	optional bytes seller = 2;
+	optional uint64 amount = 3;
+	optional uint64 price = 4;
+	repeated ReceivableInfo receivable = 5;
+}
+
+message BuyerReport {
+	optional bytes seller = 1;
+	optional bytes reports_info = 2;
+}
+
+message GetSell {
+	optional bytes seller = 1;
+}
+
+message C2cMessage {
+	optional NewSell sell = 1;
+	optional NewOrder order = 2;
+	optional BuyerReport report = 3;
+	repeated SellInfo sells = 4;
+	optional GetSell get_sell = 5;
+	optional uint64 prepayment = 6;
+	optional bytes c2c_addr = 7;
+	optional SellInfo user_order_info = 8;
+}
+
+message InitInfo {
+	optional bytes pubkey = 1;
+	optional bytes platform = 2;
+	optional bytes version = 3;
+	optional bytes pk_hash = 4;
+	optional InitInfoTagType tag = 5;
+	optional TxMessage tx = 6;
+	optional uint64 tx_height = 7;
+	optional C2cMessage c2c = 8;
+}
+
+message Header {
+	repeated NodeInfo nodes = 1;
+	optional uint32 type = 2;
+	optional uint32 vpn_ip = 3;
+	optional InitInfoTagType tag = 4;
+	repeated TxInfo txs = 5;
+	optional C2cMessage c2c = 6;
+}

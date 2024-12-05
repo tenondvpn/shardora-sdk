@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DataAuthApi</title>
+</head>
+<body>
+    <button type="button" style="width: 150px;" onclick="CreateDataId('b5039128131f96f6164a33bc7fbc48c2f5cf425e8476b1c4d0f4d186fbd0d708', ['0xe252D01A37b85E2007Ed3CC13797aa92496204A4'])">创建链上数据身份</button><br><br>
+    <button type="button" style="width: 150px;" onclick="Prepayment(100000000000)">预置QUOTA</button>&nbsp;&nbsp;--等待5秒<br><br>
+    <button type="button" style="width: 150px;" onclick="AddManager(['0xe252D01A37b85E2007Ed3CC13797aa92496204A3'])">添加管理员</button><br><br>
+    <button type="button" style="width: 150px;" onclick="RemoveManager(['0xe252D01A37b85E2007Ed3CC13797aa92496204A3'])">删除管理员</button><br><br>
+    <button type="button" style="width: 150px;" onclick="AddAuth()">确权</button><br><br>
+    <button type="button" style="width: 150px;" onclick="GetAuths()">确权溯源查询</button><br><br>
+    <textarea rows="200" cols="120" id="response">
+        </textarea>
+    <script src="./crypto/jquery.min.js"></script>
+    <script src="./crypto/crypto-js.min.js"></script>
+    <script src="./crypto/umd.min.js"></script>
+    <script src="./crypto/xxhash.min.js"></script>
+    <script src="./crypto/sha3.min.js"></script>
+    <script src="./crypto/bn.js"></script>
+    <script src="./crypto/secp256k1.js"></script>
+    <script src="./crypto/ethereumjs-tx-1.3.3.min.js"></script>
+    <script src="./crypto/web3.min.js"></script>
+    <script src="./api.js"></script>
+</body>
+</html>
