@@ -1,4 +1,6 @@
-from zjchain.api import get_keypair, transfer
+import sys
+sys.path.append('../zjchain')
+from api import get_keypair, transfer
 
 
 if __name__ == '__main__':
