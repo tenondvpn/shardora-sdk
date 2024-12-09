@@ -21,27 +21,42 @@ from coincurve import PrivateKey as cPrivateKey
 
 w3 = Web3(Web3.IPCProvider('/Users/myuser/Library/Ethereum/geth.ipc'))
 
-http_ip = "10.101.20.35"
-http_port = "8301"
+http_ip = "127.0.0.1"
+http_port = "23001"
 
 Keypair = namedtuple('Keypair', ['skbytes', 'pkbytes', 'account_id'])
 Sign = namedtuple('Sign', ['r', 's', 'v'])
 
 STEP_FROM = 0
 
+def transfer(str_prikey: str, to: str, amount: int, step=0, gid="", contract_bytes="", input="", key="", val=""):
+    if gid == "":
+        gid = _gen_gid()
 
-def transfer(gid: str, to: str, amount: int, gas_limit: int, gas_price: int, keypair: Keypair, des_shard_id: int):
-    params = get_transfer_params(gid=gid,
-                                 to=to,
-                                 amount=amount,
-                                 gas_limit=gas_limit,
-                                 gas_price=gas_price,
-                                 keypair=keypair,
-                                 des_shard_id=des_shard_id)
-    print(_call_tx(params))
+    keypair = get_keypair(bytes.fromhex(str_prikey))
+    param = get_transfer_params(gid, to, amount, 90000000000, 1, keypair, 3, contract_bytes, input, 0, step, key, val)
+    return _call_tx(param)
 
+def gen_gid() -> str:
+    return _gen_gid()
 
-def get_transfer_params(gid: str, to: str, amount: int, gas_limit: int, gas_price: int, keypair: Keypair, des_shard_id: int):
+def keccak256_str(s: str) -> str:
+    return _keccak256_str(s)
+
+def get_transfer_params(
+        gid: str, 
+        to: str, 
+        amount: int, 
+        gas_limit: int, 
+        gas_price: int, 
+        keypair: Keypair, 
+        des_shard_id: int,
+        contract_bytes: str,
+        input: str,
+        prepay: int,
+        step: 0,
+        key: str,
+        val: str):
     if gid == '':
         gid = _gen_gid()
     sign = _sign_message(keypair=keypair,
@@ -50,22 +65,26 @@ def get_transfer_params(gid: str, to: str, amount: int, gas_limit: int, gas_pric
                         amount=amount,
                         gas_limit=gas_limit,
                         gas_price=gas_price,
-                        step=STEP_FROM,
-                        contract_bytes='',
-                        input='',
-                        prepay=0)
+                        step=step,
+                        contract_bytes=contract_bytes,
+                        input=input,
+                        prepay=prepay,
+                        key=key,
+                        val=val)
     params = _get_tx_params(sign=sign,
                             pkbytes=keypair.pkbytes,
                             gid=gid,
                             to=to,
                             amount=amount,
-                            prepay=0,
+                            prepay=prepay,
                             gas_limit=gas_limit,
                             gas_price=gas_price,
-                            contract_bytes='',
-                            input='',
+                            contract_bytes=contract_bytes,
+                            input=input,
                             des_shard_id=des_shard_id,
-                            step=STEP_FROM)
+                            step=step,
+                            key=key,
+                            val=val)
     return params
 
 
@@ -103,15 +122,6 @@ def get_keypair(skbytes: bytes) -> Keypair:
     account_id = addr[len(addr)-40:len(addr)]
     return Keypair(skbytes=skbytes, pkbytes=decode_hex('04'+pkbytes.hex()), account_id=account_id)
 
-
-def _encode_func_signature(func_str: str) -> str:
-    return _keccak256_str(func_str)[:8]
-
-
-def _encode_func_param(param_types: list, param_values: list) -> str:
-    return encode_hex(encode(param_types, param_values))[2:]
-
-
 def _keccak256_bytes(b: bytes) -> str:
     k = sha3.keccak_256()
     k.update(b)
@@ -122,15 +132,36 @@ def _keccak256_str(s: str) -> str:
     k.update(bytes(s, 'utf-8'))
     return k.hexdigest()
     
-    
-def _sign_message(keypair: Keypair, gid: str, to: str, amount: int, gas_limit: int, gas_price: int, step: int, contract_bytes: str, input: str, prepay: int):
+def _sign_message(
+        keypair: Keypair, 
+        gid: str, 
+        to: str, 
+        amount: int, 
+        gas_limit: int, 
+        gas_price: int, 
+        step: int, 
+        contract_bytes: str, 
+        input: str, 
+        prepay: int,
+        key:str,
+        val:str):
     frompk = keypair.pkbytes
-    b = decode_hex(gid) + frompk + decode_hex(to) + _long_to_bytes(amount) + _long_to_bytes(gas_limit) + _long_to_bytes(gas_price) + _long_to_bytes(step)
+    b = decode_hex(gid) + \
+         frompk + \
+         decode_hex(to) + \
+         _long_to_bytes(amount) + \
+         _long_to_bytes(gas_limit) + \
+         _long_to_bytes(gas_price) + \
+         _long_to_bytes(step)
     if contract_bytes != '':
         b += decode_hex(contract_bytes)
     if input != '':
         b += decode_hex(input)
     b += _long_to_bytes(prepay)
+    if key != "":
+        b += bytes(key, 'utf-8')
+        if val != "":
+            b += bytes(val, 'utf-8')
 
     h = _keccak256_bytes(b)
     sign_bytes = cPrivateKey(keypair.skbytes).sign_recoverable(bytes.fromhex(h), hasher=None)
@@ -168,7 +199,7 @@ def _gen_gid() -> str:
 
 def _get_tx_params(sign, pkbytes: bytes, gid: str, gas_limit: int, gas_price: int,
                    to: str, amount: int, prepay: int, contract_bytes: str, des_shard_id: int,
-                   input: str, step: int):
+                   input: str, step: int, key: str, val: str):
     ret = {
         'gid': gid,
         'pubkey': encode_hex(pkbytes)[2:],
@@ -178,10 +209,12 @@ def _get_tx_params(sign, pkbytes: bytes, gid: str, gas_limit: int, gas_price: in
         'gas_limit': gas_limit,
         'gas_price': gas_price,
         'shard_id': des_shard_id,
+        'key': key,
+        'val': val,
+        "pepay": prepay,
         'sign_r': sign.r,
         'sign_s': sign.s,
         'sign_v': sign.v,
-        'pepay': prepay,
         }
     
     if contract_bytes != '':
@@ -199,8 +232,17 @@ def _call_tx(post_data: dict):
 
 def _post_data(path: str, data: dict):
     querystr = urlencode(data)
+    print(path)
+    print(data)
     res = requests.post(path, data=data, headers={
         'Content-Type': 'application/x-www-form-urlencoded',
         'Content-Length': str(len(bytes(querystr, 'utf-8'))),
     })
+    print(res)
     return res
+
+if __name__ == '__main__':
+    res = transfer('373a3165ec09edea6e7a1c8cff21b06f5fb074386ece283927aef730c6d44596',
+            'ce7acc2cfbfdeddc7c033fc157f3854cc4e72d7b',
+            amount=1000)
+    print(res)
