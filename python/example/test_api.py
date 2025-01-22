@@ -37,7 +37,7 @@ if __name__ == '__main__':
      sk = 'cefc2c33064ea7691aee3e5e4f7842935d26f3ad790d81cf015e79b78958e848'
      # 测试转账交易
      gid = gen_gid()
-     if not transfer(str_prikey=sk, gid=gid, to='ce7acc2cfbfdeddc7c033fc157f3854cc4e72d7b', amount=1000):
+     if not transfer(str_prikey=sk, gid=gid, to='ce7acc2cfbfdeddc7c033fc157f3854cc4e72d7b', amount=1000, check_gid_valid=False):
           print(f"transfer failed: {gid}")
           sys.exit(1)
 
