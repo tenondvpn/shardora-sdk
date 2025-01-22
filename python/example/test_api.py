@@ -2,7 +2,7 @@ import time
 import sys
 sys.path.append('../')
 from eth_utils import decode_hex, encode_hex
-from zjchain.api import get_keypair, transfer, post_data, deploy_contract, call_contract_function, query_contract_function, check_contract_deploy_success, contract_prepayment
+from zjchain.api import get_keypair, transfer, post_data, deploy_contract, call_contract_function, query_contract_function, check_contract_deploy_success, contract_prepayment, gen_gid
 
 def confirmation_of_rights(private_key, key, value, rights_address=""):
      if rights_address == "":
@@ -36,11 +36,12 @@ def get_confirmation_of_rights_list(count = 10, rights_address=""):
 if __name__ == '__main__':
      sk = 'cefc2c33064ea7691aee3e5e4f7842935d26f3ad790d81cf015e79b78958e848'
      # 测试转账交易
-     if not transfer(str_prikey=sk, to='ce7acc2cfbfdeddc7c033fc157f3854cc4e72d7b', amount=1000):
-          print("测试转账交易 transfer failed")
+     gid = gen_gid()
+     if not transfer(str_prikey=sk, gid=gid, to='ce7acc2cfbfdeddc7c033fc157f3854cc4e72d7b', amount=1000):
+          print(f"transfer failed: {gid}")
           sys.exit(1)
 
-     print("测试转账交易成功！")
+     print(f"transfer success: {gid}")
      sys.exit(0)
      #测试确权
      confirmation_of_rights(private_key=sk, key="confirm", value=encode_hex("value")[2:])
